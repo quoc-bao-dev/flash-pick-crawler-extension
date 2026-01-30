@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Flash Pick - Crawler",
+  "version": "1.0.0",
+  "action": {
+    "default_popup": "index.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://shopee.vn/*", "https://*.shopee.vn/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://shopee.vn/*",
+    "https://*.shopee.vn/*"
+  ]
+}

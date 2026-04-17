@@ -6,7 +6,8 @@
     "default_popup": "index.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
@@ -17,10 +18,19 @@
   "permissions": [
     "storage",
     "tabs",
-    "scripting"
+    "scripting",
+    "alarms"
   ],
   "host_permissions": [
     "https://shopee.vn/*",
-    "https://*.shopee.vn/*"
+    "https://*.shopee.vn/*",
+    "https://localhost:3010/*",
+    "http://localhost:3010/*"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["crawler.js", "assets/*.js"],
+      "matches": ["https://shopee.vn/*", "https://*.shopee.vn/*"]
+    }
   ]
 }

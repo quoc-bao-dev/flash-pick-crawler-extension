@@ -1,6 +1,8 @@
 import { setupAgent, disconnect } from "./agent";
 import { crawlConfig } from "../core/config/crawl-config";
 
+const delay = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const getNextOccurrence = (timeStr: string) => {
   const [hour, minute] = timeStr.split(":").map(Number);
   const now = new Date();
@@ -11,6 +13,31 @@ const getNextOccurrence = (timeStr: string) => {
     next.setDate(next.getDate() + 1);
   }
   return next.getTime();
+};
+
+const clearAllTimers = async (tabId: number) => {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      world: "MAIN",
+      func: () => {
+        const id = window.setTimeout(() => { }, 0);
+        for (let i = 0; i <= id; i++) {
+          window.clearTimeout(i);
+          window.clearInterval(i);
+          console.log("[Flash Pick] Cleared timer:", i);
+        }
+
+        if (document.head) {
+          document.head.innerHTML = "";
+        }
+
+        console.log("[Flash Pick] All intervals, timeouts and document head cleared.");
+      },
+    });
+  } catch (err) {
+    console.error("[Flash Pick] Failed to clear timers:", err);
+  }
 };
 
 const triggerCrawl = async (tabId?: number) => {
@@ -46,6 +73,9 @@ const triggerCrawl = async (tabId?: number) => {
       return;
     }
 
+    await delay(5000);
+    // clear all interval
+    await clearAllTimers(targetTabId);
     console.log("[Crawl Trigger] Injecting crawler.js into tab:", targetTabId);
     await chrome.scripting.executeScript({
       target: { tabId: targetTabId },
@@ -66,9 +96,9 @@ chrome.runtime.onStartup.addListener(() => {
 });
 
 // Đảm bảo chạy ngay khi cài đặt hoặc reload extension
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async () => {
   console.log("[Background] Extension installed/reloaded. Setting up scheduled jobs...");
-
+  await chrome.alarms.clearAll();
   // 1. Alarm Keep-alive (1 phút)
   chrome.alarms.create("keep-alive-alarm", { periodInMinutes: 1 });
 
@@ -101,7 +131,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 chrome.runtime.onMessage.addListener((request, _, sendResponse) => {
   if (request.action === "RUN_CRAWL" && request.tabId) {
     console.log("[Flash Pick] Manual crawl trigger for tab:", request.tabId);
-    triggerCrawl(request.tabId);
+    triggerCrawl();
     sendResponse({ success: true });
   }
 
@@ -117,5 +147,3 @@ chrome.runtime.onMessage.addListener((request, _, sendResponse) => {
     sendResponse({ success: true });
   }
 });
-
-// /https://shopee.vn/verify/captcha
